@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:plate_calc/ui/widgets/plate_colors.dart';
 import '../../models/settings.dart';
 import '../../models/plate.dart';
 import '../../services/plate_calculator.dart';
@@ -482,15 +483,39 @@ class _HomeScreenState extends State<HomeScreen> {
                                       children: () {
                                         final entries = result!.used.entries.toList()
                                           ..sort((a, b) => b.key.compareTo(a.key));
-                                        return entries
-                                            .map((e) => Chip(
-                                                  label: Text(
-                                                    '${e.key.toString().replaceAll('.0', '')} ${settings.units} x${e.value}',
+
+                                        final baseStyle = Theme.of(context).textTheme.bodyMedium!
+                                            .copyWith(color: Theme.of(context).colorScheme.onSurface);
+
+                                        return entries.map((e) {
+                                          final c = PlateVisual.color(settings.units, e.key);
+
+                                          return Chip(
+                                            // un borde con el color del disco para mejor legibilidad
+                                            shape: StadiumBorder(side: BorderSide(color: c, width: 1.5)),
+                                            backgroundColor:
+                                                Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.20),
+                                            label: RichText(
+                                              text: TextSpan(
+                                                style: baseStyle,
+                                                children: [
+                                                  // 👉 número del peso con su color
+                                                  TextSpan(
+                                                    text: e.key.toString().replaceAll('.0', ''),
+                                                    style: baseStyle.copyWith(
+                                                      color: c,
+                                                      fontWeight: FontWeight.w700,
+                                                    ),
                                                   ),
-                                                ))
-                                            .toList();
+                                                  TextSpan(text: ' ${settings.units}  x${e.value}'),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }).toList();
                                       }(),
                                     ),
+
                                     const SizedBox(height: 10),
                                   ],
                                 ),
