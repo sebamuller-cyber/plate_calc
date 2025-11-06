@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'data/presets.dart';
-import 'ui/screens/home_screen.dart';
+import 'ui/screens/rm_list_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,8 +16,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6750A4)),
         useMaterial3: true,
       ),
-      // Puedes cambiar el preset inicial si prefieres iniciar en LB
-      home: HomeScreen(initial: Presets.comercialLb()),
+      home: const RmListScreen(),
     );
   }
 }

@@ -49,11 +49,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         children: [
           Row(
             children: [
-              ElevatedButton(
-                onPressed: () => _applyPreset(Presets.halteroKg()),
-                child: const Text('Preset: Haltero KG'),
-              ),
-              const SizedBox(width: 8),
+              
               ElevatedButton(
                 onPressed: () => _applyPreset(Presets.powerKg()),
                 child: const Text('Preset: Power KG'),

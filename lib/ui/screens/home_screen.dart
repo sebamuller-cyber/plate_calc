@@ -3,12 +3,23 @@ import '../../models/settings.dart';
 import '../../models/plate.dart';
 import '../../services/plate_calculator.dart';
 import '../widgets/barbell_visual.dart';
+import '../../services/rm_storage.dart';
 
 enum TargetInputMode { totalInclBar, perSideWithoutBar }
 
 class HomeScreen extends StatefulWidget {
   final Settings initial;
-  const HomeScreen({super.key, required this.initial});
+  final String? movementName;    // nombre del movimiento (para guardar RM)
+  final double? initialRm;       // RM inicial precargado (opcional)
+  final String? forceUnits;      // 'kg' | 'lb' (opcional)
+
+  const HomeScreen({
+    super.key,
+    required this.initial,
+    this.movementName,
+    this.initialRm,
+    this.forceUnits,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -17,10 +28,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late Settings settings;
 
-  final rmCtrl = TextEditingController(text: '200');
+  // Deja vacío por defecto (como pediste)
+  final rmCtrl = TextEditingController();       // ← sin texto inicial
   final pctCtrl = TextEditingController(text: '100');
 
-  TargetInputMode mode = TargetInputMode.totalInclBar;
+  // Por defecto: Por lado (sin barra)
+  TargetInputMode mode = TargetInputMode.perSideWithoutBar;
 
   PlateResult? result;
   String? error;
@@ -30,18 +43,41 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     settings = widget.initial;
+
+    // Forzar unidades si vienen de la pantalla anterior
+    if (widget.forceUnits != null && widget.forceUnits != settings.units) {
+      settings = settings.copyWith(units: widget.forceUnits);
+      settings = settings.copyWith(barWeight: settings.units == 'lb' ? 45 : 20);
+    }
+
+    _initRm();
   }
+
+  Future<void> _initRm() async {
+    // Si te pasaron un RM inicial, úsalo
+    if (widget.initialRm != null) {
+      rmCtrl.text = _fmt(widget.initialRm!);
+      return;
+    }
+    // Si hay movimiento, intenta cargar su último RM guardado para estas unidades
+    if (widget.movementName != null) {
+      final last = await RmStorage.loadLastRm(widget.movementName!, settings.units);
+      if (last != null) {
+        rmCtrl.text = _fmt(last);
+        setState(() {});
+      }
+    }
+  }
+
+  String _fmt(double v) =>
+      v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 1);
 
   List<double> _barOptions() => settings.units == 'lb' ? [45, 33] : [20, 15];
 
   double _mapBarBetweenUnits(double bar, String from, String to) {
     if (from == to) return bar;
-    if (from == 'lb' && to == 'kg') {
-      return (bar - 45).abs() <= (bar - 33).abs() ? 20 : 15;
-    }
-    if (from == 'kg' && to == 'lb') {
-      return (bar - 20).abs() <= (bar - 15).abs() ? 45 : 33;
-    }
+    if (from == 'lb' && to == 'kg') return (bar - 45).abs() <= (bar - 33).abs() ? 20 : 15;
+    if (from == 'kg' && to == 'lb') return (bar - 20).abs() <= (bar - 15).abs() ? 45 : 33;
     return (to == 'lb') ? 45 : 20;
   }
 
@@ -69,34 +105,60 @@ class _HomeScreenState extends State<HomeScreen> {
 
   double _targetTotalFromPct(double pct) => _targetsForPct(pct)['total']!;
 
+  // Guardar RM manualmente (botón en AppBar)
+  Future<void> _saveRmManually() async {
+    if (widget.movementName == null) return;
+    final rm = double.tryParse(rmCtrl.text.replaceAll(',', '.'));
+    if (rm == null || rm <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingresa un RM válido antes de guardar.')),
+      );
+      return;
+    }
+    await RmStorage.saveLastRm(widget.movementName!, settings.units, rm);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('RM guardado para ${widget.movementName} (${settings.units}).')),
+    );
+  }
+
   void _onCalculate() {
+    // Cerrar teclado
     FocusManager.instance.primaryFocus?.unfocus();
 
     setState(() {
       error = null;
-      final pct = _parsePct(pctCtrl.text);
-      if (pct <= 0) {
+    });
+
+    final pct = _parsePct(pctCtrl.text);
+    if (pct <= 0) {
+      setState(() {
         error = 'Ingresa un porcentaje válido (> 0).';
         result = null;
         _showPanel = false;
-        return;
-      }
+      });
+      return;
+    }
 
-      final targetTotal = _targetTotalFromPct(pct);
-      final r = computePlates(
-        target: targetTotal,
-        barWeight: settings.barWeight,
-        collarsWeight: settings.collarsWeight,
-        plates: settings.plates.map((p) => Plate(weight: p.weight, count: p.count)).toList(),
-      );
+    final targetTotal = _targetTotalFromPct(pct);
+    final r = computePlates(
+      target: targetTotal,
+      barWeight: settings.barWeight,
+      collarsWeight: settings.collarsWeight,
+      plates: settings.plates.map((p) => Plate(weight: p.weight, count: p.count)).toList(),
+    );
 
-      if (r == null) {
+    if (r == null) {
+      setState(() {
         error = 'El objetivo es menor que la barra o los datos no son válidos.';
         result = null;
         _showPanel = false;
-        return;
-      }
+      });
+      return;
+    }
 
+    // ❌ Ya NO guardamos RM aquí. Solo mostramos resultado.
+    setState(() {
       result = r;
       _showPanel = true;
     });
@@ -145,7 +207,17 @@ class _HomeScreenState extends State<HomeScreen> {
         return true;
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Calculadora de Discos')),
+        appBar: AppBar(
+          title: Text(widget.movementName ?? 'Calculadora de Discos'),
+          actions: [
+            if (widget.movementName != null)
+              IconButton(
+                tooltip: 'Guardar RM',
+                onPressed: _saveRmManually,
+                icon: const Icon(Icons.save_outlined),
+              ),
+          ],
+        ),
         body: Stack(
           children: [
             SingleChildScrollView(
@@ -153,6 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Unidades
                   Row(
                     children: [
                       const Text('Unidades:'),
@@ -173,6 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 8),
 
+                  // Barra + Collares
                   Row(
                     children: [
                       Expanded(
@@ -213,6 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 12),
 
+                  // Interpretación
                   Row(
                     children: [
                       const Text('Interpretar RM/% como:'),
@@ -229,13 +304,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 12),
 
+                  // RM y %
                   Row(
                     children: [
                       Expanded(
                         child: TextField(
                           controller: rmCtrl,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(labelText: 'Tu 1RM (según modo)'),
+                          decoration: InputDecoration(
+                            labelText: widget.movementName == null
+                                ? 'Tu 1RM'
+                                : '1RM de ${widget.movementName}',
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -254,6 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 12),
 
+                  // Vista derivada
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -270,6 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 12),
 
+                  // Tabla de % clickeable
                   Card(
                     elevation: 0,
                     color: theme.colorScheme.surfaceVariant.withOpacity(0.35),
@@ -290,13 +372,16 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                           ),
-                          Column(children: tableRows.map((f) => _percentRow(f)).toList()),
+                          Column(
+                            children: tableRows.map((f) => _percentRow(f)).toList(),
+                          ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
 
+                  // Calcular
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -304,7 +389,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: const Text('Calcular distribución de discos'),
                     ),
                   ),
-
                   if (error != null) ...[
                     const SizedBox(height: 12),
                     Text(error!, style: const TextStyle(color: Colors.red)),
@@ -327,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // Panel deslizable
+            // Panel resultado
             AnimatedPositioned(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutCubic,
@@ -351,8 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Row(
                                 children: [
                                   Container(
-                                    width: 40,
-                                    height: 4,
+                                    width: 40, height: 4,
                                     decoration: BoxDecoration(
                                       color: Colors.grey.shade400,
                                       borderRadius: BorderRadius.circular(2),
@@ -393,8 +476,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 12),
                                     Text('Discos elegidos (totales):', style: theme.textTheme.bodyMedium),
                                     const SizedBox(height: 6),
-
-                                    // ✅ BLOQUE CORREGIDO
                                     Wrap(
                                       spacing: 10,
                                       runSpacing: 10,
@@ -410,7 +491,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                             .toList();
                                       }(),
                                     ),
-
                                     const SizedBox(height: 10),
                                   ],
                                 ),
@@ -427,4 +507,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+
 
