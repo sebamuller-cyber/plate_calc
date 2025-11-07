@@ -5,6 +5,7 @@ import '../../models/plate.dart';
 import '../../services/plate_calculator.dart';
 import '../widgets/barbell_visual.dart';
 import '../../services/rm_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum TargetInputMode { totalInclBar, perSideWithoutBar }
 
@@ -122,6 +123,54 @@ class _HomeScreenState extends State<HomeScreen> {
       SnackBar(content: Text('RM guardado para ${widget.movementName} (${settings.units}).')),
     );
   }
+
+  // Elimina por completo el movimiento actual: lo quita de la lista de personalizados
+  // y borra sus claves de RM / historial. Luego vuelve a la pantalla anterior.
+  
+  // Reemplaza COMPLETO este método en HomeScreen
+Future<void> _deleteMovement() async {
+  if (widget.movementName == null) return;
+  final name = widget.movementName!.trim();
+
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Eliminar movimiento'),
+      content: Text('¿Eliminar “$name” por completo? Se borrará de tu lista y su RM/Historial.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+        FilledButton.tonal(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Eliminar')),
+      ],
+    ),
+  );
+  if (confirmed != true) return;
+
+  try {
+    // 🔧 Centralizamos toda la eliminación en RmStorage
+    final ok = await RmStorage.deleteMovement(name);
+
+    if (!mounted) return;
+    if (ok) {
+      // Limpia UI local
+      rmCtrl.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Movimiento eliminado: $name')),
+      );
+      // 👈 Volvemos notificando a la pantalla anterior
+      Navigator.of(context).pop<bool>(true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo eliminar.')),
+      );
+    }
+  } catch (_) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No se pudo eliminar.')),
+    );
+  }
+}
+
 
   void _onCalculate() {
     // Cerrar teclado
@@ -390,6 +439,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: const Text('Calcular distribución de discos'),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  if (widget.movementName != null)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.error,
+                          foregroundColor: Theme.of(context).colorScheme.onError,
+                        ),
+                        onPressed: _deleteMovement,
+                        child: Text('Eliminar ' + (widget.movementName ?? 'movimiento')),
+                      ),
+                    ),
                   if (error != null) ...[
                     const SizedBox(height: 12),
                     Text(error!, style: const TextStyle(color: Colors.red)),
@@ -532,6 +594,5 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
 
 
