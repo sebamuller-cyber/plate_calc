@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class RmStorage {
   static const _kCustomLifts = 'custom_lifts';
@@ -10,6 +11,41 @@ class RmStorage {
     final v = sp.getDouble(_rmKey(lift, units));
     return v;
   }
+static String _historyKey(String name, String units) => 'history_${name}_$units';
+
+/// Agrega una entrada al historial: {rm, ts}
+static Future<void> appendRmHistory(String name, String units, double rm, DateTime ts) async {
+  final prefs = await SharedPreferences.getInstance();
+  final key = _historyKey(name, units);
+  final raw = prefs.getString(key);
+  final List<Map<String, dynamic>> list = raw == null
+      ? []
+      : List<Map<String, dynamic>>.from(jsonDecode(raw) as List);
+
+  list.add({
+    'rm': rm,
+    'ts': ts.toIso8601String(),
+  });
+
+  await prefs.setString(key, jsonEncode(list));
+}
+
+/// Devuelve la lista de entradas ordenadas desc por fecha
+static Future<List<Map<String, dynamic>>> loadRmHistory(String name, String units) async {
+  final prefs = await SharedPreferences.getInstance();
+  final raw = prefs.getString(_historyKey(name, units));
+  if (raw == null) return [];
+  final List<Map<String, dynamic>> list = List<Map<String, dynamic>>.from(jsonDecode(raw) as List);
+  list.sort((a, b) => (b['ts'] as String).compareTo(a['ts'] as String));
+  return list;
+}
+
+/// Limpia el historial (solo de esas unidades)
+static Future<bool> clearRmHistory(String name, String units) async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.remove(_historyKey(name, units));
+}
+
 static Future<void> deleteLastRm(String movementName, String units) async {
     final prefs = await SharedPreferences.getInstance();
     final key = 'rm_${units}_$movementName';

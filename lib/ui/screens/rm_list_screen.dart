@@ -58,28 +58,36 @@ class _RmListScreenState extends State<RmListScreen> {
   }
 
   Future<void> _openLift(String lift) async {
-    // Carga el último RM guardado para estas unidades
-    final last = await RmStorage.loadLastRm(lift, _units);
-    // Crea Settings según unidades elegidas en esta pantalla
-    final Settings initialSettings =
-        (_units == 'lb') ? Presets.comercialLb() : Presets.halteroKg();
+  // Carga el último RM guardado para estas unidades
+  final last = await RmStorage.loadLastRm(lift, _units);
+  // Crea Settings según unidades elegidas en esta pantalla
+  final Settings initialSettings =
+      (_units == 'lb') ? Presets.comercialLb() : Presets.halteroKg();
 
-    if (context.mounted) {
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => HomeScreen(
-            initial: initialSettings,
-            movementName: lift,
-            initialRm: last,         // puede ser null: HomeScreen manejará default
-            forceUnits: _units,      // asegura que HomeScreen arranque en estas unidades
-          ),
-        ),
-      );
-      // Al volver, refrescamos para mostrar último RM actualizado en los tiles
-      setState(() {});
-    }
+  if (!context.mounted) return;
+
+  final res = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => HomeScreen(
+        initial: initialSettings,
+        movementName: lift,
+        initialRm: last,       // puede ser null: HomeScreen lo maneja
+        forceUnits: _units,    // asegura las unidades
+      ),
+    ),
+  );
+
+  // 🔑 Si HomeScreen devolvió que se eliminó, recargamos la lista completa
+  if (res is Map && res['deleted'] == true) {
+    await _load();           // vuelve a leer custom lifts desde RmStorage
+    if (context.mounted) setState(() {});
+    return;
   }
+
+  // Si no hubo eliminación, refrescamos para que los FutureBuilder re-lean el último RM
+  if (context.mounted) setState(() {});
+}
 
   Widget _liftTile(String lift) {
     return FutureBuilder<double?>(

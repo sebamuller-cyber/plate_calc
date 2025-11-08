@@ -54,6 +54,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _initRm();
   }
+String _fmtDate(DateTime dt) {
+  final d = dt.toLocal();
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${two(d.day)}/${two(d.month)}/${d.year}  ${two(d.hour)}:${two(d.minute)}';
+}
 
   Future<void> _initRm() async {
     // Si te pasaron un RM inicial, úsalo
@@ -70,6 +75,101 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
   }
+  Future<void> _openRmHistory() async {
+  if (widget.movementName == null) return;
+  final name = widget.movementName!;
+  final unit = settings.units;
+
+  List<Map<String, dynamic>> entries = await RmStorage.loadRmHistory(name, unit);
+
+  if (!mounted) return;
+  await showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (ctx) {
+      return StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          Future<void> _clear() async {
+            final ok = await RmStorage.clearRmHistory(name, unit);
+            if (ok) {
+              entries = [];
+              setSheetState(() {}); // refresca la hoja
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Historial limpiado.')),
+                );
+              }
+            }
+          }
+
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Historial RM — $name (${unit})',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: entries.isEmpty ? null : _clear,
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('Limpiar'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (entries.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text('No hay registros aún. Guarda un RM para crear entradas.'),
+                    )
+                  else
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 420),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: entries.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (_, i) {
+                          final e = entries[i];
+                          final rm = (e['rm'] as num).toDouble();
+                          final ts = DateTime.tryParse(e['ts'] as String ?? '') ?? DateTime.now();
+                          return ListTile(
+                            leading: const Icon(Icons.history),
+                            title: Text('RM: ${rm.toStringAsFixed(1)} $unit'),
+                            subtitle: Text(_fmtDate(ts)),
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+bool _wasDeleted = false; // ← nuevo: sabremos si se eliminó algo
 
   String _fmt(double v) =>
       v.toStringAsFixed(v.truncateToDouble() == v ? 0 : 1);
@@ -109,20 +209,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Guardar RM manualmente (botón en AppBar)
   Future<void> _saveRmManually() async {
-    if (widget.movementName == null) return;
-    final rm = double.tryParse(rmCtrl.text.replaceAll(',', '.'));
-    if (rm == null || rm <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingresa un RM válido antes de guardar.')),
-      );
-      return;
-    }
-    await RmStorage.saveLastRm(widget.movementName!, settings.units, rm);
-    if (!mounted) return;
+  if (widget.movementName == null) return;
+  final rm = double.tryParse(rmCtrl.text.replaceAll(',', '.'));
+  if (rm == null || rm <= 0) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('RM guardado para ${widget.movementName} (${settings.units}).')),
+      const SnackBar(content: Text('Ingresa un RM válido antes de guardar.')),
     );
+    return;
   }
+
+  await RmStorage.saveLastRm(widget.movementName!, settings.units, rm);
+
+  // ⬇️ NUEVO: registrar en historial
+  await RmStorage.appendRmHistory(
+    widget.movementName!,
+    settings.units,
+    rm,
+    DateTime.now(),
+  );
+
+  if (!mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('RM guardado para ${widget.movementName} (${settings.units}).')),
+  );
+}
+
 
   // Elimina por completo el movimiento actual: lo quita de la lista de personalizados
   // y borra sus claves de RM / historial. Luego vuelve a la pantalla anterior.
@@ -146,18 +257,26 @@ Future<void> _deleteMovement() async {
   if (confirmed != true) return;
 
   try {
-    // 🔧 Centralizamos toda la eliminación en RmStorage
-    final ok = await RmStorage.deleteMovement(name);
-
+    final ok = await RmStorage.deleteMovement(name); // ← centraliza toda la eliminación
     if (!mounted) return;
+
     if (ok) {
-      // Limpia UI local
+      _wasDeleted = true;      // ← marcamos que hubo borrado
       rmCtrl.clear();
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Movimiento eliminado: $name')),
       );
-      // 👈 Volvemos notificando a la pantalla anterior
-      Navigator.of(context).pop<bool>(true);
+
+      // Cerramos esta pantalla devolviendo un resultado para que la anterior refresque
+      Future.microtask(() {
+        if (mounted) {
+          Navigator.of(context).pop(<String, dynamic>{
+            'deleted': true,
+            'name': name,
+          });
+        }
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo eliminar.')),
@@ -170,6 +289,7 @@ Future<void> _deleteMovement() async {
     );
   }
 }
+
 
 
   void _onCalculate() {
@@ -250,12 +370,17 @@ Future<void> _deleteMovement() async {
 
     return WillPopScope(
       onWillPop: () async {
-        if (_showPanel) {
-          setState(() => _showPanel = false);
-          return false;
-        }
-        return true;
-      },
+  if (_showPanel) {
+    setState(() => _showPanel = false);
+    return false;
+  }
+  if (_wasDeleted) {
+    Navigator.of(context).pop(<String, dynamic>{ 'deleted': true });
+    return false;
+  }
+  return true;
+},
+
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.movementName ?? 'Calculadora de Discos'),
@@ -432,26 +557,43 @@ Future<void> _deleteMovement() async {
                   const SizedBox(height: 16),
 
                   // Calcular
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _onCalculate,
-                      child: const Text('Calcular distribución de discos'),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (widget.movementName != null)
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.error,
-                          foregroundColor: Theme.of(context).colorScheme.onError,
-                        ),
-                        onPressed: _deleteMovement,
-                        child: Text('Eliminar ' + (widget.movementName ?? 'movimiento')),
-                      ),
-                    ),
+                  // Calcular
+SizedBox(
+  width: double.infinity,
+  child: ElevatedButton(
+    onPressed: _onCalculate,
+    child: const Text('Calcular distribución de discos'),
+  ),
+),
+const SizedBox(height: 8),
+
+// ⬇️ NUEVO: botón historial (solo si hay movimiento)
+if (widget.movementName != null) ...[
+  SizedBox(
+    width: double.infinity,
+    child: OutlinedButton.icon(
+      onPressed: _openRmHistory,
+      icon: const Icon(Icons.history),
+      label: const Text('Historial RM'),
+    ),
+  ),
+  const SizedBox(height: 8),
+],
+
+// Eliminar
+if (widget.movementName != null)
+  SizedBox(
+    width: double.infinity,
+    child: ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Theme.of(context).colorScheme.error,
+        foregroundColor: Theme.of(context).colorScheme.onError,
+      ),
+      onPressed: _deleteMovement,
+      child: Text('Eliminar ' + (widget.movementName ?? 'movimiento')),
+    ),
+  ),
+
                   if (error != null) ...[
                     const SizedBox(height: 12),
                     Text(error!, style: const TextStyle(color: Colors.red)),
