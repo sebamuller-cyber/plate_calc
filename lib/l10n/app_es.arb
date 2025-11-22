@@ -1,0 +1,147 @@
+{
+  "@@locale": "es",
+  "appTitle": "Calculadora de Discos",
+
+  "unitsLabel": "Unidades:",
+  "barLabel": "Barra",
+  "collarsLabel": "Collares",
+
+  "interpretRmAs": "Interpretar RM% como:",
+  "modeTotalInclBar": "Total (incluye barra)",
+  "modePerSide": "Por lado (sin barra)",
+
+  "rmFieldNoMovement": "Tu 1RM",
+  "rmFieldWithMovement": "1RM de {movementName}",
+  "@rmFieldWithMovement": {
+    "description": "Etiqueta cuando hay nombre de movimiento",
+    "placeholders": {
+      "movementName": {
+        "type": "String"
+      }
+    }
+  },
+
+  "percentLabel": "Porcentaje",
+  "derivedTargetLabel": "Objetivo derivado de {percent}% del RM:",
+  "@derivedTargetLabel": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+
+  "derivedTotal": "TOTAL: {weight} {units}",
+  "@derivedTotal": {
+    "placeholders": {
+      "weight": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+
+  "derivedPerSide": "POR LADO (discos): {weight} {units}",
+  "@derivedPerSide": {
+    "placeholders": {
+      "weight": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+
+  "percentTableTitle": "Tabla de porcentajes (toca para aplicar)",
+  "percentTableHeaderPercent": "%",
+  "percentTableHeaderTotal": "Total",
+  "percentTableHeaderPerSide": "Por lado (sin barra)",
+
+  "calculateButton": "Calcular distribución de discos",
+
+  "historyButton": "Historial RM",
+  "historySheetTitle": "Historial RM — {movementName} ({units})",
+  "@historySheetTitle": {
+    "placeholders": {
+      "movementName": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+  "historyClear": "Limpiar",
+  "historyEmpty": "No hay registros aún. Guarda un RM para crear entradas.",
+  "historyClearedSnack": "Historial limpiado.",
+  "historyRowRm": "RM: {rm} {units}",
+  "@historyRowRm": {
+    "placeholders": {
+      "rm": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+
+  "saveRmTooltip": "Guardar RM",
+  "saveRmInvalidSnack": "Ingresa un RM válido antes de guardar.",
+  "saveRmOkSnack": "RM guardado para {movementName} ({units}).",
+  "@saveRmOkSnack": {
+    "placeholders": {
+      "movementName": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+
+  "deleteMovementDialogTitle": "Eliminar movimiento",
+  "deleteMovementDialogContent": "¿Eliminar \"{movementName}\" por completo? Se borrará de tu lista y su RM/Historial.",
+  "@deleteMovementDialogContent": {
+    "placeholders": {
+      "movementName": { "type": "String" }
+    }
+  },
+  "deleteMovementCancel": "Cancelar",
+  "deleteMovementConfirm": "Eliminar",
+  "deleteMovementButton": "Eliminar {movementName}",
+  "@deleteMovementButton": {
+    "placeholders": {
+      "movementName": { "type": "String" }
+    }
+  },
+  "deleteMovementOkSnack": "Movimiento eliminado: {movementName}",
+  "@deleteMovementOkSnack": {
+    "placeholders": {
+      "movementName": { "type": "String" }
+    }
+  },
+  "deleteMovementFailSnack": "No se pudo eliminar.",
+
+  "errorPercentInvalid": "Ingresa un porcentaje válido (> 0).",
+  "errorTargetTooLow": "El objetivo es menor que la barra o los datos no son válidos.",
+
+  "panelCloseTooltip": "Cerrar",
+
+  "resultExact": "Alcanzado: {weight} {units} (exacto)",
+  "@resultExact": {
+    "placeholders": {
+      "weight": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+  "resultApprox": "Mejor aproximación: {weight} {units} (faltan {shortfall} {units})",
+  "@resultApprox": {
+    "placeholders": {
+      "weight": { "type": "String" },
+      "shortfall": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+
+  "chosenDiscsTitle": "Discos elegidos (totales):"
+    ,
+  "yourLiftsTitle": "Tus movimientos",
+  "addLiftTitle": "Agregar movimiento",
+  "addLiftHint": "Ej: Front Squat",
+  "saveLabel": "Guardar",
+  "noRmLabel": "Sin RM"
+  ,
+  "rmDetailNewRmLabel": "Nuevo RM",
+  "rmDetailNewRmHint": "Ej: 150.5",
+  "rmSavedSnack": "RM guardado.",
+  "deleteRecordDialogTitle": "Eliminar registro",
+  "deleteRecordDialogContent": "¿Eliminar este registro del historial?",
+  "deleteRecordTooltip": "Eliminar registro",
+  "clearHistoryDialogTitle": "Limpiar historial",
+  "clearHistoryDialogContent": "¿Eliminar todo el historial de este movimiento?"
+
+}

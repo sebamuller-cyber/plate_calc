@@ -1,4 +1,4 @@
-package com.example.plate_calc
+package com.datamull.plate_calc
 
 import io.flutter.embedding.android.FlutterActivity
 

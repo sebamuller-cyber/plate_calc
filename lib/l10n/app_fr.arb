@@ -1,0 +1,147 @@
+{
+  "@@locale": "fr",
+  "appTitle": "Calculateur de plaques",
+
+  "unitsLabel": "Unités :",
+  "barLabel": "Barre",
+  "collarsLabel": "Collets",
+
+  "interpretRmAs": "Interpréter RM% comme :",
+  "modeTotalInclBar": "Total (barre incluse)",
+  "modePerSide": "Par côté (sans la barre)",
+
+  "rmFieldNoMovement": "Ton 1RM",
+  "rmFieldWithMovement": "1RM de {movementName}",
+  "@rmFieldWithMovement": {
+    "description": "Étiquette quand il y a un nom de mouvement",
+    "placeholders": {
+      "movementName": {
+        "type": "String"
+      }
+    }
+  },
+
+  "percentLabel": "Pourcentage",
+  "derivedTargetLabel": "Objectif dérivé de {percent} % du RM :",
+  "@derivedTargetLabel": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+
+  "derivedTotal": "TOTAL : {weight} {units}",
+  "@derivedTotal": {
+    "placeholders": {
+      "weight": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+
+  "derivedPerSide": "PAR CÔTÉ (disques) : {weight} {units}",
+  "@derivedPerSide": {
+    "placeholders": {
+      "weight": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+
+  "percentTableTitle": "Tableau des pourcentages (touche pour appliquer)",
+  "percentTableHeaderPercent": "%",
+  "percentTableHeaderTotal": "Total",
+  "percentTableHeaderPerSide": "Par côté (sans la barre)",
+
+  "calculateButton": "Calculer la répartition des plaques",
+
+  "historyButton": "Historique de RM",
+  "historySheetTitle": "Historique de RM — {movementName} ({units})",
+  "@historySheetTitle": {
+    "placeholders": {
+      "movementName": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+  "historyClear": "Effacer",
+  "historyEmpty": "Aucun enregistrement pour l’instant. Enregistre un RM pour créer des entrées.",
+  "historyClearedSnack": "Historique effacé.",
+  "historyRowRm": "RM : {rm} {units}",
+  "@historyRowRm": {
+    "placeholders": {
+      "rm": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+
+  "saveRmTooltip": "Enregistrer le RM",
+  "saveRmInvalidSnack": "Entre un RM valide avant d’enregistrer.",
+  "saveRmOkSnack": "RM enregistré pour {movementName} ({units}).",
+  "@saveRmOkSnack": {
+    "placeholders": {
+      "movementName": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+
+  "deleteMovementDialogTitle": "Supprimer le mouvement",
+  "deleteMovementDialogContent": "Supprimer « {movementName} » complètement ? Il sera retiré de ta liste ainsi que son RM / historique.",
+  "@deleteMovementDialogContent": {
+    "placeholders": {
+      "movementName": { "type": "String" }
+    }
+  },
+  "deleteMovementCancel": "Annuler",
+  "deleteMovementConfirm": "Supprimer",
+  "deleteMovementButton": "Supprimer {movementName}",
+  "@deleteMovementButton": {
+    "placeholders": {
+      "movementName": { "type": "String" }
+    }
+  },
+  "deleteMovementOkSnack": "Mouvement supprimé : {movementName}",
+  "@deleteMovementOkSnack": {
+    "placeholders": {
+      "movementName": { "type": "String" }
+    }
+  },
+  "deleteMovementFailSnack": "Impossible de supprimer.",
+
+  "errorPercentInvalid": "Entre un pourcentage valide (> 0).",
+  "errorTargetTooLow": "L’objectif est inférieur au poids de la barre ou les données ne sont pas valides.",
+
+  "panelCloseTooltip": "Fermer",
+
+  "resultExact": "Atteint : {weight} {units} (exact)",
+  "@resultExact": {
+    "placeholders": {
+      "weight": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+  "resultApprox": "Meilleure approximation : {weight} {units} (il manque {shortfall} {units})",
+  "@resultApprox": {
+    "placeholders": {
+      "weight": { "type": "String" },
+      "shortfall": { "type": "String" },
+      "units": { "type": "String" }
+    }
+  },
+
+  "chosenDiscsTitle": "Plaques choisies (totales) :"
+    ,
+  "yourLiftsTitle": "Tes mouvements",
+  "addLiftTitle": "Ajouter un mouvement",
+  "addLiftHint": "Ex.: Front Squat",
+  "saveLabel": "Enregistrer",
+  "noRmLabel": "Sans RM"
+  ,
+  "rmDetailNewRmLabel": "Nouveau RM",
+  "rmDetailNewRmHint": "Ex : 150.5",
+  "rmSavedSnack": "RM enregistré.",
+  "deleteRecordDialogTitle": "Supprimer l’enregistrement",
+  "deleteRecordDialogContent": "Supprimer cet enregistrement de l’historique ?",
+  "deleteRecordTooltip": "Supprimer l’enregistrement",
+  "clearHistoryDialogTitle": "Effacer l’historique",
+  "clearHistoryDialogContent": "Supprimer tout l’historique de ce mouvement ?"
+
+}

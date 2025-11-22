@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:plate_calc/l10n/app_localizations.dart';
 
 class RmDetailScreen extends StatefulWidget {
   final String liftName; // e.g., "Front Squat"
@@ -38,7 +39,9 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
       final parsed = list.map<Map<String, dynamic>>((e) {
         final m = Map<String, dynamic>.from(e as Map);
         return {
-          'rm': (m['rm'] is num) ? (m['rm'] as num).toDouble() : double.tryParse('${m['rm']}') ?? 0.0,
+          'rm': (m['rm'] is num)
+              ? (m['rm'] as num).toDouble()
+              : double.tryParse('${m['rm']}') ?? 0.0,
           'date': '${m['date'] ?? ''}',
         };
       }).toList();
@@ -53,7 +56,11 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
     final value = double.tryParse(text);
     if (value == null || value <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingresa un RM válido (> 0).')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.saveRmInvalidSnack,
+          ),
+        ),
       );
       return;
     }
@@ -72,18 +79,17 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_historyKey, jsonEncode(newList));
 
-    // Opcional: también sincroniza “último RM” en kg o lb si tu app lo usa
-    // Aquí no sabemos la unidad activa, así que no sobreescribimos por defecto.
-    // Si quieres guardar en kg por defecto, descomenta:
-    // await prefs.setDouble(_rmKgKey, value);
-
     setState(() {
       records = newList;
       ctrlRm.clear();
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('RM guardado.')),
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context)!.rmSavedSnack,
+        ),
+      ),
     );
   }
 
@@ -91,16 +97,24 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar movimiento'),
+        title: Text(AppLocalizations.of(context)!.deleteMovementDialogTitle),
         content: Text(
-          '¿Deseas eliminar “${widget.liftName}” por completo?\n'
-          'Se borrará de tu lista de movimientos personalizados y su historial/RM guardados.',
+          AppLocalizations.of(context)!.deleteMovementDialogContent(
+            widget.liftName,
+          ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              AppLocalizations.of(context)!.deleteMovementCancel,
+            ),
+          ),
           FilledButton.tonal(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Eliminar'),
+            child: Text(
+              AppLocalizations.of(context)!.deleteMovementConfirm,
+            ),
           ),
         ],
       ),
@@ -112,7 +126,9 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
 
     // 1) Quitar de la lista de movimientos personalizados
     final list = prefs.getStringList(_customListKey) ?? <String>[];
-    list.removeWhere((e) => e.trim().toLowerCase() == widget.liftName.trim().toLowerCase());
+    list.removeWhere(
+      (e) => e.trim().toLowerCase() == widget.liftName.trim().toLowerCase(),
+    );
     await prefs.setStringList(_customListKey, list);
 
     // 2) Borrar historial y últimos RM
@@ -123,7 +139,13 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Movimiento eliminado: ${widget.liftName}')),
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context)!.deleteMovementOkSnack(
+            widget.liftName,
+          ),
+        ),
+      ),
     );
 
     // Devuelve al caller que se eliminó, para que actualice la lista
@@ -134,13 +156,24 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar registro'),
-        content: const Text('¿Eliminar este registro del historial?'),
+        title: Text(
+          AppLocalizations.of(context)!.deleteRecordDialogTitle,
+        ),
+        content: Text(
+          AppLocalizations.of(context)!.deleteRecordDialogContent,
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              AppLocalizations.of(context)!.deleteMovementCancel,
+            ),
+          ),
           FilledButton.tonal(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Eliminar'),
+            child: Text(
+              AppLocalizations.of(context)!.deleteMovementConfirm,
+            ),
           ),
         ],
       ),
@@ -163,7 +196,8 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
         title: Text(widget.liftName),
         actions: [
           IconButton(
-            tooltip: 'Eliminar movimiento',
+            tooltip:
+                AppLocalizations.of(context)!.deleteMovementDialogTitle,
             onPressed: _deleteMovement,
             icon: const Icon(Icons.delete_outline),
           ),
@@ -179,9 +213,9 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
                   child: TextField(
                     controller: ctrlRm,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Nuevo RM',
-                      hintText: 'Ej: 150.5',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.rmDetailNewRmLabel,
+                      hintText: AppLocalizations.of(context)!.rmDetailNewRmHint,
                     ),
                   ),
                 ),
@@ -191,7 +225,9 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
                   child: ElevatedButton.icon(
                     onPressed: _saveRm,
                     icon: const Icon(Icons.save_outlined),
-                    label: const Text('Guardar'),
+                    label: Text(
+                      AppLocalizations.of(context)!.saveLabel,
+                    ),
                   ),
                 ),
               ],
@@ -200,14 +236,18 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Historial',
+                AppLocalizations.of(context)!.historyButton,
                 style: theme.textTheme.titleMedium,
               ),
             ),
             const SizedBox(height: 8),
             Expanded(
               child: records.isEmpty
-                  ? const Center(child: Text('Aún no tienes registros.'))
+                  ? Center(
+                      child: Text(
+                        AppLocalizations.of(context)!.historyEmpty,
+                      ),
+                    )
                   : ListView.separated(
                       itemCount: records.length,
                       separatorBuilder: (_, __) => const Divider(height: 1),
@@ -218,7 +258,7 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
                           title: Text('${r['rm']}'),
                           subtitle: Text('${r['date']}'),
                           trailing: IconButton(
-                            tooltip: 'Eliminar registro',
+                            tooltip: AppLocalizations.of(context)!.deleteRecordTooltip,
                             icon: const Icon(Icons.delete_outline),
                             onPressed: () => _deleteRecord(index),
                           ),
@@ -235,13 +275,24 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      title: const Text('Limpiar historial'),
-                      content: const Text('¿Eliminar todo el historial de este movimiento?'),
+                      title: Text(
+                        AppLocalizations.of(context)!.clearHistoryDialogTitle,
+                      ),
+                      content: Text(
+                        AppLocalizations.of(context)!.clearHistoryDialogContent,
+                      ),
                       actions: [
-                        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: Text(
+                            AppLocalizations.of(context)!.deleteMovementCancel,
+                          ),
+                        ),
                         FilledButton.tonal(
                           onPressed: () => Navigator.of(ctx).pop(true),
-                          child: const Text('Limpiar'),
+                          child: Text(
+                            AppLocalizations.of(context)!.historyClear,
+                          ),
                         ),
                       ],
                     ),
@@ -252,7 +303,9 @@ class _RmDetailScreenState extends State<RmDetailScreen> {
                     setState(() => records = []);
                   }
                 },
-                label: const Text('Limpiar historial'),
+                label: Text(
+                  AppLocalizations.of(context)!.historyClear,
+                ),
               ),
             ),
           ],

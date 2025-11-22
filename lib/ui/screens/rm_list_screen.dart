@@ -4,6 +4,7 @@ import '../../data/presets.dart';
 import '../../models/settings.dart';
 import '../../services/rm_storage.dart';
 import 'home_screen.dart';
+import 'package:plate_calc/l10n/app_localizations.dart';
 
 class RmListScreen extends StatefulWidget {
   const RmListScreen({super.key});
@@ -33,14 +34,19 @@ class _RmListScreenState extends State<RmListScreen> {
     await showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Agregar movimiento'),
+        title: Text(AppLocalizations.of(context)!.addLiftTitle),
         content: TextField(
           controller: ctrl,
-          decoration: const InputDecoration(hintText: 'Ej: Front Squat'),
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context)!.addLiftHint,
+          ),
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.deleteMovementCancel),
+          ),
           ElevatedButton(
             onPressed: () async {
               final name = ctrl.text.trim();
@@ -50,7 +56,7 @@ class _RmListScreenState extends State<RmListScreen> {
               }
               if (context.mounted) Navigator.pop(context);
             },
-            child: const Text('Guardar'),
+            child: Text(AppLocalizations.of(context)!.saveLabel),
           ),
         ],
       ),
@@ -58,36 +64,36 @@ class _RmListScreenState extends State<RmListScreen> {
   }
 
   Future<void> _openLift(String lift) async {
-  // Carga el último RM guardado para estas unidades
-  final last = await RmStorage.loadLastRm(lift, _units);
-  // Crea Settings según unidades elegidas en esta pantalla
-  final Settings initialSettings =
-      (_units == 'lb') ? Presets.comercialLb() : Presets.halteroKg();
+    // Carga el último RM guardado para estas unidades
+    final last = await RmStorage.loadLastRm(lift, _units);
+    // Crea Settings según unidades elegidas en esta pantalla
+    final Settings initialSettings =
+        (_units == 'lb') ? Presets.comercialLb() : Presets.halteroKg();
 
-  if (!context.mounted) return;
+    if (!context.mounted) return;
 
-  final res = await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => HomeScreen(
-        initial: initialSettings,
-        movementName: lift,
-        initialRm: last,       // puede ser null: HomeScreen lo maneja
-        forceUnits: _units,    // asegura las unidades
+    final res = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HomeScreen(
+          initial: initialSettings,
+          movementName: lift,
+          initialRm: last,       // puede ser null: HomeScreen lo maneja
+          forceUnits: _units,    // asegura las unidades
+        ),
       ),
-    ),
-  );
+    );
 
-  // 🔑 Si HomeScreen devolvió que se eliminó, recargamos la lista completa
-  if (res is Map && res['deleted'] == true) {
-    await _load();           // vuelve a leer custom lifts desde RmStorage
+    // 🔑 Si HomeScreen devolvió que se eliminó, recargamos la lista completa
+    if (res is Map && res['deleted'] == true) {
+      await _load();           // vuelve a leer custom lifts desde RmStorage
+      if (context.mounted) setState(() {});
+      return;
+    }
+
+    // Si no hubo eliminación, refrescamos para que los FutureBuilder re-lean el último RM
     if (context.mounted) setState(() {});
-    return;
   }
-
-  // Si no hubo eliminación, refrescamos para que los FutureBuilder re-lean el último RM
-  if (context.mounted) setState(() {});
-}
 
   Widget _liftTile(String lift) {
     return FutureBuilder<double?>(
@@ -114,8 +120,11 @@ class _RmListScreenState extends State<RmListScreen> {
                   const SizedBox(height: 6),
                   Text(
                     (lastRm == null)
-                        ? 'Sin RM'
-                        : 'RM: ${lastRm.toStringAsFixed(1)} $_units',
+                        ? AppLocalizations.of(context)!.noRmLabel
+                        : AppLocalizations.of(context)!.historyRowRm(
+                            lastRm.toStringAsFixed(1),
+                            _units,
+                          ),
                     style: TextStyle(
                       color: Colors.grey.shade700,
                       fontSize: 12,
@@ -137,11 +146,13 @@ class _RmListScreenState extends State<RmListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tus Movimientos'),
+        title: Text(AppLocalizations.of(context)!.yourLiftsTitle),
         actions: [
-          const Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: Center(child: Text('Unidades:')),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Center(
+              child: Text(AppLocalizations.of(context)!.unitsLabel),
+            ),
           ),
           DropdownButton<String>(
             value: _units,
