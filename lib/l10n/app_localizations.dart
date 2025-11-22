@@ -414,6 +414,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete all history for this lift?'**
   String get clearHistoryDialogContent;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsTabLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsTabLanguage;
+
+  /// No description provided for @settingsTabInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get settingsTabInventory;
+
+  /// No description provided for @settingsLanguageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App Language'**
+  String get settingsLanguageTitle;
+
+  /// No description provided for @settingsLanguageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Use system language'**
+  String get settingsLanguageSystem;
+
+  /// No description provided for @settingsLanguageSpanish.
+  ///
+  /// In en, this message translates to:
+  /// **'Spanish'**
+  String get settingsLanguageSpanish;
+
+  /// No description provided for @settingsLanguageFrench.
+  ///
+  /// In en, this message translates to:
+  /// **'French'**
+  String get settingsLanguageFrench;
+
+  /// No description provided for @settingsLanguageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get settingsLanguageEnglish;
+
+  /// No description provided for @inventoryKgTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plates in kg'**
+  String get inventoryKgTitle;
+
+  /// No description provided for @inventoryLbTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plates in lb'**
+  String get inventoryLbTitle;
+
+  /// No description provided for @inventorySaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Save inventory'**
+  String get inventorySaveButton;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

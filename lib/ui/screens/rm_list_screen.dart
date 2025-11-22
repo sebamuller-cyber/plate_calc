@@ -5,13 +5,63 @@ import '../../models/settings.dart';
 import '../../services/rm_storage.dart';
 import 'home_screen.dart';
 import 'package:plate_calc/l10n/app_localizations.dart';
+import 'dart:convert';
+import '../../models/plate.dart';
+
+
 
 class RmListScreen extends StatefulWidget {
-  const RmListScreen({super.key});
+  final VoidCallback? onOpenSettings;
+
+  const RmListScreen({super.key, this.onOpenSettings});
 
   @override
   State<RmListScreen> createState() => _RmListScreenState();
 }
+
+    Future<Settings> _loadSettingsForUnits(String units) async {
+    // Partimos SIEMPRE de los presets (traen barra/collares por defecto)
+    Settings base =
+        (units == 'lb') ? Presets.comercialLb() : Presets.halteroKg();
+
+    final prefs = await SharedPreferences.getInstance();
+    final key =
+        (units == 'lb') ? 'inventory_settings_lb' : 'inventory_settings_kg';
+    final raw = prefs.getString(key);
+
+    if (raw == null) {
+      return base; // no hay inventario guardado, usamos preset completo
+    }
+
+    try {
+      final decoded = jsonDecode(raw);
+
+      // Soportar tanto formato nuevo (lista) como viejo ({plates: [...]})
+      List<dynamic> platesJson;
+      if (decoded is List) {
+        platesJson = decoded;
+      } else if (decoded is Map && decoded['plates'] is List) {
+        platesJson = decoded['plates'] as List;
+      } else {
+        return base;
+      }
+
+      final customPlates = platesJson
+          .map(
+            (e) => Plate(
+              weight: (e['weight'] as num).toDouble(),
+              count: (e['count'] as num).toInt(),
+            ),
+          )
+          .toList();
+
+      // 👇 SOLO sobreescribimos los discos; barra/collares quedan de los presets
+      return base.copyWith(plates: customPlates);
+    } catch (_) {
+      return base;
+    }
+  }
+
 
 class _RmListScreenState extends State<RmListScreen> {
   final List<String> _baseLifts = const ['Deadlift', 'Snatch', 'Clean', 'Jerk'];
@@ -64,36 +114,36 @@ class _RmListScreenState extends State<RmListScreen> {
   }
 
   Future<void> _openLift(String lift) async {
-    // Carga el último RM guardado para estas unidades
-    final last = await RmStorage.loadLastRm(lift, _units);
-    // Crea Settings según unidades elegidas en esta pantalla
-    final Settings initialSettings =
-        (_units == 'lb') ? Presets.comercialLb() : Presets.halteroKg();
+  // Carga el último RM guardado para estas unidades
+  final last = await RmStorage.loadLastRm(lift, _units);
 
-    if (!context.mounted) return;
+  // 👇 NUEVO: cargamos Settings desde inventario (o preset si no hay nada)
+  final Settings initialSettings = await _loadSettingsForUnits(_units);
 
-    final res = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => HomeScreen(
-          initial: initialSettings,
-          movementName: lift,
-          initialRm: last,       // puede ser null: HomeScreen lo maneja
-          forceUnits: _units,    // asegura las unidades
-        ),
+  if (!context.mounted) return;
+
+  final res = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => HomeScreen(
+        initial: initialSettings,
+        movementName: lift,
+        initialRm: last,
+        forceUnits: _units,
       ),
-    );
+    ),
+  );
 
-    // 🔑 Si HomeScreen devolvió que se eliminó, recargamos la lista completa
-    if (res is Map && res['deleted'] == true) {
-      await _load();           // vuelve a leer custom lifts desde RmStorage
-      if (context.mounted) setState(() {});
-      return;
-    }
-
-    // Si no hubo eliminación, refrescamos para que los FutureBuilder re-lean el último RM
+  // resto igual que antes...
+  if (res is Map && res['deleted'] == true) {
+    await _load();
     if (context.mounted) setState(() {});
+    return;
   }
+
+  if (context.mounted) setState(() {});
+}
+
 
   Widget _liftTile(String lift) {
     return FutureBuilder<double?>(
@@ -146,26 +196,30 @@ class _RmListScreenState extends State<RmListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.yourLiftsTitle),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Center(
-              child: Text(AppLocalizations.of(context)!.unitsLabel),
-            ),
-          ),
-          DropdownButton<String>(
-            value: _units,
-            underline: const SizedBox.shrink(),
-            items: const [
-              DropdownMenuItem(value: 'kg', child: Text('kg')),
-              DropdownMenuItem(value: 'lb', child: Text('lb')),
-            ],
-            onChanged: (v) => setState(() => _units = v ?? 'kg'),
-          ),
-          const SizedBox(width: 8),
-        ],
+  title: Text(AppLocalizations.of(context)!.yourLiftsTitle),
+  actions: [
+    Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Center(
+        child: Text(AppLocalizations.of(context)!.unitsLabel),
       ),
+    ),
+    DropdownButton<String>(
+      value: _units,
+      underline: const SizedBox.shrink(),
+      items: const [
+        DropdownMenuItem(value: 'kg', child: Text('kg')),
+        DropdownMenuItem(value: 'lb', child: Text('lb')),
+      ],
+      onChanged: (v) => setState(() => _units = v ?? 'kg'),
+    ),
+    IconButton(
+      icon: const Icon(Icons.settings),
+      onPressed: widget.onOpenSettings,
+    ),
+  ],
+),
+
       floatingActionButton: FloatingActionButton(
         onPressed: _addLiftDialog,
         child: const Icon(Icons.add),

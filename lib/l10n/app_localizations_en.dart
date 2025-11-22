@@ -190,4 +190,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearHistoryDialogContent => 'Delete all history for this lift?';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsTabLanguage => 'Language';
+
+  @override
+  String get settingsTabInventory => 'Inventory';
+
+  @override
+  String get settingsLanguageTitle => 'App Language';
+
+  @override
+  String get settingsLanguageSystem => 'Use system language';
+
+  @override
+  String get settingsLanguageSpanish => 'Spanish';
+
+  @override
+  String get settingsLanguageFrench => 'French';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get inventoryKgTitle => 'Plates in kg';
+
+  @override
+  String get inventoryLbTitle => 'Plates in lb';
+
+  @override
+  String get inventorySaveButton => 'Save inventory';
 }

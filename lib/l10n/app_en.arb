@@ -138,6 +138,19 @@
   "deleteRecordDialogContent": "Delete this record from history?",
   "deleteRecordTooltip": "Delete record",
   "clearHistoryDialogTitle": "Clear history",
-  "clearHistoryDialogContent": "Delete all history for this lift?"
+  "clearHistoryDialogContent": "Delete all history for this lift?",
+  "settingsTitle": "Settings",
+  "settingsTabLanguage": "Language",
+  "settingsTabInventory": "Inventory",
+  "settingsLanguageTitle": "App Language",
+  "settingsLanguageSystem": "Use system language",
+  "settingsLanguageSpanish": "Spanish",
+  "settingsLanguageFrench": "French",
+  "settingsLanguageEnglish": "English",
+
+  "inventoryKgTitle": "Plates in kg",
+  "inventoryLbTitle": "Plates in lb",
+  "inventorySaveButton": "Save inventory"
+
 
 }

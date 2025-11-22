@@ -142,6 +142,19 @@
   "deleteRecordDialogContent": "Supprimer cet enregistrement de l’historique ?",
   "deleteRecordTooltip": "Supprimer l’enregistrement",
   "clearHistoryDialogTitle": "Effacer l’historique",
-  "clearHistoryDialogContent": "Supprimer tout l’historique de ce mouvement ?"
+  "clearHistoryDialogContent": "Supprimer tout l’historique de ce mouvement ?",
+  "settingsTitle": "Paramètres",
+  "settingsTabLanguage": "Langue",
+  "settingsTabInventory": "Inventaire",
+  "settingsLanguageTitle": "Langue de l’application",
+  "settingsLanguageSystem": "Utiliser la langue du système",
+  "settingsLanguageSpanish": "Espagnol",
+  "settingsLanguageFrench": "Français",
+  "settingsLanguageEnglish": "Anglais",
+
+  "inventoryKgTitle": "Disques en kg",
+  "inventoryLbTitle": "Disques en lb",
+  "inventorySaveButton": "Enregistrer l’inventaire"
+
 
 }

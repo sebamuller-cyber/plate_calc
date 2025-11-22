@@ -190,4 +190,37 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get clearHistoryDialogContent => '¿Eliminar todo el historial de este movimiento?';
+
+  @override
+  String get settingsTitle => 'Configuración';
+
+  @override
+  String get settingsTabLanguage => 'Idioma';
+
+  @override
+  String get settingsTabInventory => 'Inventario';
+
+  @override
+  String get settingsLanguageTitle => 'Idioma de la aplicación';
+
+  @override
+  String get settingsLanguageSystem => 'Usar idioma del sistema';
+
+  @override
+  String get settingsLanguageSpanish => 'Español';
+
+  @override
+  String get settingsLanguageFrench => 'Francés';
+
+  @override
+  String get settingsLanguageEnglish => 'Inglés';
+
+  @override
+  String get inventoryKgTitle => 'Discos en kg';
+
+  @override
+  String get inventoryLbTitle => 'Discos en lb';
+
+  @override
+  String get inventorySaveButton => 'Guardar inventario';
 }
