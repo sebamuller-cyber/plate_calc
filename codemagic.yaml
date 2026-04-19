@@ -20,14 +20,11 @@ workflows:
           flutter pub get
       - name: Set up code signing settings on Xcode project
         script: |
-          # 1. Configuramos el Team ID en el proyecto de Xcode
-          xcode-project set-team-id --team-id T69RZR8Y5K
-          
-          # 2. Descargamos y preparamos los perfiles de Apple
-          xcode-project use-profiles
+          # Este comando es el que "inyecta" el .p8 en el proceso de compilación
+          xcode-project use-profiles --dev-team T69RZR8Y5K
       - name: Build iOS for Distribution
         script: |
-          # Compilamos el IPA firmado
+          # Forzamos a Flutter a usar la configuración de Codemagic
           flutter build ipa --release \
             --export-options-plist=$HOME/export_options.plist
     artifacts:
