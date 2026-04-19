@@ -20,8 +20,8 @@ workflows:
           flutter pub get
       - name: Set up code signing settings on Xcode project
         script: |
-          # Este comando es el que "inyecta" el .p8 en el proceso de compilación
-          xcode-project use-profiles --dev-team T69RZR8Y5K
+          # Solo usamos el comando base, él buscará las variables automáticamente
+          xcode-project use-profiles
       - name: Build iOS for Distribution
         script: |
           # Forzamos a Flutter a usar la configuración de Codemagic
