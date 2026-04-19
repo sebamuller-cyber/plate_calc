@@ -1,33 +1,40 @@
 workflows:
-  ios-app-store:
-    name: iOS App Store Production
-    instance_type: mac_mini_m2
+  ios-release:
+    name: iOS App Store Release
     max_build_duration: 60
-
+    instance_type: mac_mini_m2
     integrations:
-      app_store_connect: SebaHalt
-
+      app_store_connect: "SebaHalt" # <--- VERIFICA que este nombre sea igual al de tu integración en Codemagic
     environment:
+      groups:
+        - app_store_credentials # <--- Donde guardaste APP_STORE_CONNECT_PRIVATE_KEY, KEY_ID e ISSUER_ID
+      vars:
+        BUNDLE_ID: "com.seba.haltercalc" # Tu Bundle ID exacto
+        XCODE_SCHEME: "Runner"
       flutter: stable
-
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.seba.haltercalc
-
+      xcode: latest
     scripts:
       - name: Flutter clean & get
         script: |
           flutter clean
           flutter pub get
-
-      - name: Build IPA (auto signing)
+      - name: Set up code signing
         script: |
-          flutter build ipa --release
-
+          # Configuramos Codemagic para que use perfiles de App Store
+          xcode-project use-profiles --export-method app-store
+      - name: Build iOS without signing
+        script: |
+          # Compilamos la app 'desnuda'. Esto NO dará error de certificados.
+          flutter build ios --release --no-codesign
+      - name: Build and Sign IPA
+        script: |
+          # Esta herramienta toma la app anterior y le 'pega' tu firma (.p8)
+          xcode-project build-ipa \
+            --workspace ios/Runner.xcworkspace \
+            --scheme "$XCODE_SCHEME"
     artifacts:
       - build/ios/ipa/*.ipa
-
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
+        submit_to_testflight: true # Se subirá directo a TestFlight si todo sale bien
