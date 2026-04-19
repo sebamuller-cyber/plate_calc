@@ -1,6 +1,6 @@
 workflows:
-  ios-app-store:
-    name: iOS App Store Production
+  ios-app-store-production:
+    name: iOS App Store Production (Safe Mode)
     max_build_duration: 60
     instance_type: mac_mini_m2
 
@@ -8,40 +8,42 @@ workflows:
       app_store_connect: app-store-connect
 
     environment:
+      flutter: stable
+
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.seba.haltercalc
 
+      vars:
+        BUNDLE_ID: com.seba.haltercalc
+
+    cache:
+      cache_paths:
+        - ~/.pub-cache
+        - ios/Pods
+        - ~/.gradle
+
     scripts:
-      - name: Get Flutter packages
+      - name: Install dependencies
         script: |
           flutter pub get
 
-      - name: Build iOS (no manual codesign)
+      - name: Clean iOS build
         script: |
-          flutter build ios --release
+          flutter clean
 
-      - name: Archive with Codemagic automatic signing
+      - name: Install CocoaPods
         script: |
-          xcodebuild \
-            -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -archivePath build/Runner.xcarchive \
-            archive \
-            CODE_SIGN_STYLE=Automatic
+          cd ios
+          pod install
+          cd ..
 
-      - name: Export IPA
+      - name: Build IPA (SIGNED AUTOMATICALLY)
         script: |
-          xcodebuild \
-            -exportArchive \
-            -archivePath build/Runner.xcarchive \
-            -exportOptionsPlist ios/ExportOptions.plist \
-            -exportPath build/ipa
+          flutter build ipa --release
 
     artifacts:
-      - build/ipa/*.ipa
-      - build/Runner.xcarchive
+      - build/ios/ipa/*.ipa
 
     publishing:
       app_store_connect:
