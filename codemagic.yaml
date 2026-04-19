@@ -24,9 +24,13 @@ workflows:
           xcode-project use-profiles
       - name: Build iOS for Distribution
         script: |
-          # Forzamos a Flutter a usar la configuración de Codemagic
+          # Generamos el archivo de configuración para la firma
+          xcode-project use-profiles
+          
+          # Compilamos forzando el Team ID y el nombre del perfil
           flutter build ipa --release \
-            --export-options-plist=$HOME/export_options.plist
+            --export-options-plist=$HOME/export_options.plist \
+            --dart-define=APP_TEAM_ID=T69RZR8Y5K
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
