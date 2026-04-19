@@ -12,26 +12,24 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.seba.haltercalc
 
-      vars:
-        BUNDLE_ID: com.seba.haltercalc
-
     scripts:
-      - name: Install dependencies
+      - name: Get Flutter packages
         script: |
           flutter pub get
 
-      - name: Build iOS release
+      - name: Build iOS (no manual codesign)
         script: |
-          flutter build ios --release --no-codesign
+          flutter build ios --release
 
-      - name: Archive with Codemagic
+      - name: Archive with Codemagic automatic signing
         script: |
           xcodebuild \
             -workspace ios/Runner.xcworkspace \
             -scheme Runner \
             -configuration Release \
             -archivePath build/Runner.xcarchive \
-            archive
+            archive \
+            CODE_SIGN_STYLE=Automatic
 
       - name: Export IPA
         script: |
