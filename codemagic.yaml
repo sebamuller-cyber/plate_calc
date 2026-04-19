@@ -1,45 +1,51 @@
 workflows:
-  ios-app-store:
-    name: iOS App Store Production
+  ios-release:
+    name: iOS Release Build
     max_build_duration: 60
-    instance_type: mac_mini_m2
-    integrations:
-      app_store_connect: "app-store-connect" # <--- ESTO ES LO QUE FALTA
+
     environment:
       flutter: stable
       xcode: latest
-      groups:
-        - app_store_credentials
+
+      ios_signing:
+        distribution_type: app_store   # usa "ad_hoc" si quieres instalar en dispositivos
+        bundle_identifier: com.seba.haltercalc
+
       vars:
-        XCODE_WORKSPACE: "Runner.xcworkspace" 
-        XCODE_SCHEME: "Runner"
+        BUNDLE_ID: "com.seba.haltercalc"
+
+    integrations:
+      app_store_connect: Codemagic
+
     scripts:
-      - name: Flutter clean & get
+      - name: Install dependencies
         script: |
-          flutter clean
           flutter pub get
-      - name: Set up code signing settings on Xcode project
+
+      - name: Flutter build (no signing)
         script: |
-          # Solo usamos el comando base, él buscará las variables automáticamente
-          xcode-project use-profiles
-      - name: Build iOS for Distribution
+          flutter build ios --release --no-codesign
+
+      - name: Code signing (automatic)
         script: |
-          # Generamos el archivo de configuración para la firma
           xcode-project use-profiles
-          
-          # Compilamos forzando el Team ID y el nombre del perfil
-          flutter build ipa --release \
-            --export-options-plist=$HOME/export_options.plist \
-            --dart-define=APP_TEAM_ID=T69RZR8Y5K
+
+      - name: Build IPA
+        script: |
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -archivePath build/ios/archive/Runner.xcarchive archive
+
+          xcodebuild -exportArchive \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            -exportOptionsPlist $HOME/export_options.plist \
+            -exportPath build/ios/ipa
+
     artifacts:
       - build/ios/ipa/*.ipa
+
     publishing:
       app_store_connect:
-        auth: integration 
-        submit_to_testflight: true
-      email:
-        recipients:
-          - seba.muller@hotmail.cl
-        notify:
-          success: true
-          failure: true
+        auth: integration
