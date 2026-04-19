@@ -1,47 +1,37 @@
 workflows:
-  ios-release:
-    name: iOS Release Build
+  ios-app-store:
+    name: iOS App Store Production
     max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    integrations:
+      app_store_connect: "app-store-connect"
 
     environment:
       flutter: stable
       xcode: latest
 
       ios_signing:
-        distribution_type: development   # usa "ad_hoc" si quieres instalar en dispositivos
+        distribution_type: app_store
         bundle_identifier: com.seba.haltercalc
 
-      vars:
-        BUNDLE_ID: "com.seba.haltercalc"
-
-    integrations:
-      app_store_connect: Codemagic
+      groups:
+        - app_store_credentials
 
     scripts:
-      - name: Install dependencies
+      - name: Flutter clean & get
         script: |
+          flutter clean
           flutter pub get
 
-      - name: Flutter build (no signing)
-        script: |
-          flutter build ios --release --no-codesign
-
-      - name: Code signing (automatic)
+      - name: Set up code signing
         script: |
           xcode-project use-profiles
 
       - name: Build IPA
         script: |
-          xcodebuild \
-            -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -archivePath build/ios/archive/Runner.xcarchive archive
-
-          xcodebuild -exportArchive \
-            -archivePath build/ios/archive/Runner.xcarchive \
-            -exportOptionsPlist $HOME/export_options.plist \
-            -exportPath build/ios/ipa
+          flutter build ipa --release \
+            --export-options-plist=$HOME/export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
@@ -49,3 +39,11 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
+        submit_to_testflight: true
+
+      email:
+        recipients:
+          - seba.muller@hotmail.cl
+        notify:
+          success: true
+          failure: true
