@@ -1,45 +1,33 @@
 workflows:
   ios-app-store:
     name: iOS App Store Production
-    max_build_duration: 60
     instance_type: mac_mini_m2
+    max_build_duration: 60
+
     integrations:
-      app_store_connect: "SebaHalt" # <--- ESTO ES LO QUE FALTA
+      app_store_connect: SebaHalt
+
     environment:
       flutter: stable
-      xcode: latest
-      groups:
-        - app_store_credentials
-      vars:
-        XCODE_WORKSPACE: "Runner.xcworkspace" 
-        XCODE_SCHEME: "Runner"
+
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.seba.haltercalc
+
     scripts:
       - name: Flutter clean & get
         script: |
           flutter clean
           flutter pub get
-      - name: Set up code signing settings on Xcode project
+
+      - name: Build IPA (auto signing)
         script: |
-          # Solo usamos el comando base, él buscará las variables automáticamente
-          xcode-project use-profiles
-      - name: Build iOS for Distribution
-        script: |
-          # Generamos el archivo de configuración para la firma
-          xcode-project use-profiles
-          
-          # Compilamos forzando el Team ID y el nombre del perfil
-          flutter build ipa --release \
-            --export-options-plist=$HOME/export_options.plist \
-            --dart-define=APP_TEAM_ID=T69RZR8Y5K
+          flutter build ipa --release
+
     artifacts:
       - build/ios/ipa/*.ipa
+
     publishing:
       app_store_connect:
-        auth: integration 
+        auth: integration
         submit_to_testflight: true
-      email:
-        recipients:
-          - seba.muller@hotmail.cl
-        notify:
-          success: true
-          failure: true
