@@ -20,29 +20,14 @@ workflows:
           flutter pub get
       - name: Set up code signing settings on Xcode project
         script: |
-          # Esto descarga los perfiles de Apple usando tu API Key
+          # 1. Configuramos el Team ID en el proyecto de Xcode
+          xcode-project set-team-id --team-id T69RZR8Y5K
+          
+          # 2. Descargamos y preparamos los perfiles de Apple
           xcode-project use-profiles
       - name: Build iOS for Distribution
         script: |
-          # Generamos el archivo de exportación manualmente para evitar errores
-          cat <<EOF > $HOME/export_options.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store</string>
-              <key>teamID</key>
-              <string>T69RZR8Y5K</string>
-              <key>uploadBitcode</key>
-              <false/>
-              <key>compileBitcode</key>
-              <false/>
-          </dict>
-          </plist>
-          EOF
-
-          # Compilamos usando el archivo que acabamos de crear
+          # Compilamos el IPA firmado
           flutter build ipa --release \
             --export-options-plist=$HOME/export_options.plist
     artifacts:
